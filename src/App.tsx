@@ -1,26 +1,42 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import "./App.scss";
+import Quote from "./components/quote/Quote";
+import axios from "axios";
+import moment from "moment";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+const fetchProducts = () => {
+    return axios.get("https://api.pro.coinbase.com/products");
+};
+
+const now = moment().toISOString();
+
+const interval = moment().subtract(24, "hours").toISOString();
+
+export let ws: WebSocket;
+
+const App = () => {
+    const [products, setProducts] = useState<any>([]);
+    
+    useEffect(() => {
+        fetchProducts().then((response) => {
+            const data = response.data.filter((product: any) => product.quote_currency === "USD");
+            setProducts(data);
+            ws = new WebSocket("wss://ws-feed.pro.coinbase.com");
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    type: "subscribe",
+                    product_ids: data.map((product: any) => product.id),
+                    channels: ["ticker"],
+                }));
+            };
+        });
+    }, []);
+
+    return (
+        <div className="App">
+            {products.map((product: any, index: number) => <Quote product={product} now={now} interval={interval} index={index} />)}
+        </div>
+    );
 }
 
 export default App;

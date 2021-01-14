@@ -1,0 +1,8 @@
+.App {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #000;
+    color: #FFF;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+}
